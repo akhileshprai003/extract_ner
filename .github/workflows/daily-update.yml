@@ -1,0 +1,39 @@
+name: Daily Repository Update
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  daily-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Update heartbeat file
+        run: python scripts/daily_update.py
+
+      - name: Commit and push if there are changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git add daily-heartbeat.md
+          git commit -m "chore: daily automated heartbeat update"
+          git push
